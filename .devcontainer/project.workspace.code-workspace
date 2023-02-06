@@ -1,10 +1,10 @@
 {
 	"folders": [
 		{
-			"path": ".."
+			"path": "/workspaces/observer_web"
 		},
 		{
-			"path": "../../../usr/local/lib/erlang/lib"
+			"path": "/usr/local/lib/erlang/lib"
 		}
 	],
 	"settings": {}

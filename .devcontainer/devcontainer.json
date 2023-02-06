@@ -19,7 +19,7 @@
 		"ghcr.io/eitsupi/devcontainer-features/jq-likes:0": {},
 		"ghcr.io/stuartleeks/dev-container-features/shell-history:0": {},
 		"ghcr.io/guiyomh/features/vim:0": {}
-	}
+	},
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
@@ -32,6 +32,9 @@
 
 	// Configure tool-specific properties.
 	// "customizations": {},
+
+	"remoteUser": "vscode",
+	"updateRemoteUserUID": true
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
