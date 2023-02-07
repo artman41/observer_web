@@ -15,7 +15,7 @@ init([]) ->
     },
     Children = [
         ow_fetcher_backend:child_spec(ow_system_fetcher),
-        ow_fetcher_backend:child_spec(ow_load_fetcher),
+        ow_fetcher_backend:child_spec(ow_perf_fetcher),
         ow_fetcher_backend:child_spec(ow_memory_fetcher),
         ow_fetcher_backend:child_spec(ow_applications_fetcher),
         ow_fetcher_backend:child_spec(ow_processes_fetcher),

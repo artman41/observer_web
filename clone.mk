@@ -36,35 +36,37 @@ define do_clone
 		$(eval $(if $(prepatch_$(1).erl),$(file > $(CLONE_DIR)/$(1).prepatch,$(value prepatch_$(1).erl)))) \
 		$(eval $(if $(postpatch_$(1).erl),$$(file > $(CLONE_DIR)/$(1).postpatch,$$(value postpatch_$(1).erl)))) \
 	) \
-	echo " CLONE $(LIB_DIR_$(OLD_MOD))/$(LOC_$(OLD_MOD)) -> $(CLONE_DIR)/$(NEW_MOD).erl"; \
-	sed 's|-module($(OLD_MOD))\.|-module($(NEW_MOD)).|g' $(LIB_DIR_$(OLD_MOD))/$(LOC_$(OLD_MOD)) > $(call get_erl_file,$(NEW_MOD)).tmp; \
-	includes=`sed -n 's|-include("\(.*\)")\.|\1|p' $(LIB_DIR_$(OLD_MOD))/$(LOC_$(OLD_MOD))`; \
-	for include in $$$$includes; do \
-		file="$(LIB_DIR_$(OLD_MOD))/include/$$$$include"; \
-		if test -f "$$$$file"; then \
-			replacement_include="$(APP_$(OLD_MOD))/include/$$$$include"; \
-		else \
-			replacement_include="$(APP_$(OLD_MOD))/src/$$$$include"; \
-		fi;\
-		sed "s|-include(\"$$$$include\")|-include_lib(\"$$$$replacement_include\")|g" -i $(call get_erl_file,$(NEW_MOD)).tmp; \
-	done; \
-	SEEN_FUNCTION=false; \
-	while IFS= read -r line; do \
-		if test -f "$(CLONE_DIR)/$(1).prepatch"; then \
-			if test -n "`echo "$$$$line" | grep '^[a-z]'`" && ! $$$$SEEN_FUNCTION; then \
-				SEEN_FUNCTION=true; \
-				echo "%% Prepatching START" >> $(call get_erl_file,$(NEW_MOD)); \
-				cat "$(CLONE_DIR)/$(1).prepatch" >> $(call get_erl_file,$(NEW_MOD)); \
-				echo "%% Prepatching END" >> $(call get_erl_file,$(NEW_MOD)); \
-			fi; \
+	if test "$(if $(OLD_MOD),1,0)$(if $(NEW_MOD),1,0)" = "11"; then \
+		echo " CLONE $(LIB_DIR_$(OLD_MOD))/$(LOC_$(OLD_MOD)) -> $(CLONE_DIR)/$(NEW_MOD).erl" && \
+		sed 's|-module($(OLD_MOD))\.|-module($(NEW_MOD)).|g' $(LIB_DIR_$(OLD_MOD))/$(LOC_$(OLD_MOD)) > $(call get_erl_file,$(NEW_MOD)).tmp && \
+		includes=`sed -n 's|-include("\(.*\)")\.|\1|p' $(LIB_DIR_$(OLD_MOD))/$(LOC_$(OLD_MOD))` && \
+		for include in $$$$includes; do \
+			file="$(LIB_DIR_$(OLD_MOD))/include/$$$$include" && \
+			if test -f "$$$$file"; then \
+				replacement_include="$(APP_$(OLD_MOD))/include/$$$$include"; \
+			else \
+				replacement_include="$(APP_$(OLD_MOD))/src/$$$$include"; \
+			fi && \
+			sed "s|-include(\"$$$$include\")|-include_lib(\"$$$$replacement_include\")|g" -i $(call get_erl_file,$(NEW_MOD)).tmp; \
+		done && \
+		SEEN_FUNCTION=false && \
+		while IFS= read -r line; do \
+			if test -f "$(CLONE_DIR)/$(1).prepatch"; then \
+				if test -n "`echo "$$$$line" | grep '^[a-z]'`" && ! $$$$SEEN_FUNCTION; then \
+					SEEN_FUNCTION=true && \
+					echo "%% Prepatching START" >> $(call get_erl_file,$(NEW_MOD)) && \
+					cat "$(CLONE_DIR)/$(1).prepatch" >> $(call get_erl_file,$(NEW_MOD)) && \
+					echo "%% Prepatching END" >> $(call get_erl_file,$(NEW_MOD)); \
+				fi; \
+			fi && \
+			echo "$$$$line" >> $(call get_erl_file,$(NEW_MOD)); \
+		done < $(call get_erl_file,$(NEW_MOD)).tmp && \
+		rm -f $(call get_erl_file,$(NEW_MOD)).tmp && \
+		if test -f "$(CLONE_DIR)/$(1).postpatch"; then \
+			echo "%% Postpatching START" >> $(call get_erl_file,$(NEW_MOD)) && \
+			cat "$(CLONE_DIR)/$(1).postpatch" >> $(call get_erl_file,$(NEW_MOD)) && \
+			echo "%% Postpatching END" >> $(call get_erl_file,$(NEW_MOD)); \
 		fi; \
-		echo "$$$$line" >> $(call get_erl_file,$(NEW_MOD)); \
-	done < $(call get_erl_file,$(NEW_MOD)).tmp; \
-	rm -f $(call get_erl_file,$(NEW_MOD)).tmp; \
-	if test -f "$(CLONE_DIR)/$(1).postpatch"; then \
-		echo "%% Postpatching START" >> $(call get_erl_file,$(NEW_MOD)); \
-		cat "$(CLONE_DIR)/$(1).postpatch" >> $(call get_erl_file,$(NEW_MOD)); \
-		echo "%% Postpatching END" >> $(call get_erl_file,$(NEW_MOD)); \
 	fi; \
 	rm -f "$(CLONE_DIR)/$(1).prepatch" "$(CLONE_DIR)/$(1).postpatch"
 endef

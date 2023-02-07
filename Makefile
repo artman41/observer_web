@@ -6,6 +6,7 @@ DEPS += cowboy
 DEPS += jsx
 
 CLONED_MODS += observer_wx
+CLONED_MODS += observer_perf_wx
 
 ifeq ($(COWBOY_VSN),2)
 dep_cowboy = $(pkg_cowboy_fetch) $(pkg_cowboy_repo) 2.9.0
@@ -14,11 +15,44 @@ dep_cowboy = $(pkg_cowboy_fetch) $(pkg_cowboy_repo) 1.1.2
 endif
 
 cloned_observer_wx = observer_wx cloned_observer_wx
+cloned_observer_perf_wx = observer_perf_wx cloned_observer_perf_wx
 
 ERLC_OPTS = +debug_info +warn_export_vars +warn_shadow_vars +warn_obsolete_guard
 
 define prepatch_observer_wx.erl =
 -compile(export_all).
+endef
+
+define prepatch_observer_perf_wx.erl =
+-export([
+	collect_data/2,
+	calc_max/2
+]).
+-export([
+	default_rec/1,
+	rec_from_props/2,
+	rec_to_props/2
+]).
+endef
+
+define postpatch_observer_perf_wx.erl =
+default_rec(paint) ->
+	#paint{}.
+
+rec_from_props(paint, Props) when is_list(Props) ->
+	Default = default_rec(paint),
+	list_to_tuple([paint | [
+		case lists:keyfind(Field, 1, Props) of 
+			{Field, V} -> 
+				V; 
+			false -> 
+				proplists:get_value(Field, Default) 
+		end || Field <- record_info(fields, paint)
+	]]).
+
+rec_to_props(paint, Rec = #paint{}) ->
+	Fields = record_info(fields, paint),
+	lists:zip(Fields, tl(tuple_to_list(Rec))).
 endef
 
 include clone.mk

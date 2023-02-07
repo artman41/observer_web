@@ -8,7 +8,7 @@ get_tick_rate() ->
 get_tabs() ->
     get_value(tabs, [
         iolist_to_binary(ow_system_fetcher:name()),
-        iolist_to_binary(ow_load_fetcher:name()),
+        iolist_to_binary(ow_perf_fetcher:name()),
         iolist_to_binary(ow_memory_fetcher:name()),
         iolist_to_binary(ow_applications_fetcher:name()),
         iolist_to_binary(ow_processes_fetcher:name()),
