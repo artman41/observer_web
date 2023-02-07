@@ -1,6 +1,10 @@
 -module(ow_config).
 
--export([get_tick_rate/0, get_tabs/0]).
+-export([
+    get_tick_rate/0, 
+    get_tabs/0,
+    should_watch_scheduler/0
+]).
 
 get_tick_rate() ->
     get_value(tick_rate, 200).
@@ -17,6 +21,9 @@ get_tabs() ->
         iolist_to_binary(ow_table_fetcher:name()),
         iolist_to_binary(ow_trace_fetcher:name())
     ]).
+
+should_watch_scheduler() ->
+    get_value(should_watch_scheduler, true) =:= true.
 
 %% internal
 

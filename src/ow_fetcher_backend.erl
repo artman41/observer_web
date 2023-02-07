@@ -3,6 +3,7 @@
 -export([child_spec/1, start_link/1]).
 -export([init/1]).
 
+-callback init() -> no_return().
 -callback name() -> string().
 -callback fetch() -> proplists:proplist().
 
@@ -26,12 +27,13 @@ start_link(Module) when is_atom(Module) ->
     end.
 
 init(CallbackMod) ->
-    ow_ticker_srv:add(self()),
+    catch CallbackMod:init(),
     Name = 
         try CallbackMod:name()
         catch error:undef ->
             atom_to_list(CallbackMod)
         end,
+    ow_ticker_srv:add(self()),
     proc_lib:init_ack({ok, self()}),
     loop(iolist_to_binary(Name), CallbackMod).
 

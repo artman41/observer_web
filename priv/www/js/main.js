@@ -104,7 +104,7 @@ function setupObserver(navSelector, tabContentSelector) {
 
     function createChart(containerId, parentElem, title) {
         let chart = new CanvasJS.Chart(
-            findOrCreate(containerId, `<div style="padding-bottom: 50%" class="container-fluid"></div>`, parentElem).id, 
+            findOrCreate(containerId, `<div class="container-fluid"></div>`, parentElem).id, 
             {
                 title:{text: title},
                 data: [
@@ -175,15 +175,6 @@ function setupObserver(navSelector, tabContentSelector) {
                 loadStats.push(tabData);
                 loadStats.currentSecond++;
             }
-            /*
-                {
-                    "time_us": <number>,
-                    "io": {
-                        "input": <number>,
-                        "output": <number>
-                    },
-                }
-            */
             let topHalf = findOrCreate(
                 `row-${tabName}-top`,
                 `<div class="row"></div>`,
@@ -198,9 +189,46 @@ function setupObserver(navSelector, tabContentSelector) {
 
             let data = loadStats.data();
 
-            if(charts.Scheduler === null)
-                charts.Scheduler = createChart(`container-${tabName}-scheduler`, schedulerCol, "Scheduler Utilisation (%)")
-            // TODO:
+            if(charts.Scheduler === null){
+                charts.Scheduler = createChart(`container-${tabName}-scheduler`, schedulerCol, "Scheduler Utilisation (%)");
+                charts.Scheduler.options.axisX = {
+                    gridThickness: 1,
+                    intervalType: "second",
+                    labelFormatter: function (e) {
+                        return Math.floor((e.value.getTime() - data[0].time_us/1000)/1000) + "s";
+                    },
+                    reversed: true,
+                };
+                charts.Scheduler.container.style.paddingBottom = '45%';
+            }
+
+            let schedulerPoints = {};
+
+            for(let i=0; i<data.length; i++) {
+                let elem = data[i];
+                let entries = Object.entries(elem.scheduler_wall_time);
+                for(let i=0; i<entries.length; i++) {
+                    let [key, pct] = entries[i];
+                    if(schedulerPoints[key] === undefined)
+                        schedulerPoints[key] = [];
+                    
+                    schedulerPoints[key].push({x: elem.time_us/1000, y: pct, label: `scheduler ${key}`});
+                }
+            }
+
+            charts.Scheduler.options.data = [];
+            let schedulerKeys = Object.keys(schedulerPoints);
+            for(let i=0; i<schedulerKeys.length; i++) {
+                let key = schedulerKeys[i];
+                charts.Scheduler.options.data.push({
+                    type: "line",
+                    // indexLabel: "#percent%",
+                    percentFormatString: "#0.##",
+                    dataPoints: schedulerPoints[key],
+                    xValueType: "dateTime",
+                    label: key
+                })
+            }
 
             let bottomHalf = findOrCreate(
                 `row-${tabName}-bottom`,
@@ -214,8 +242,17 @@ function setupObserver(navSelector, tabContentSelector) {
                 bottomHalf
             );
                 
-            if(charts.Memory === null)
-                charts.Memory = createChart(`container-${tabName}-memory`, memoryCol, "Memory Usage (MB)")
+            if(charts.Memory === null) {
+                charts.Memory = createChart(`container-${tabName}-memory`, memoryCol, "Memory Usage (MB)");
+                charts.Memory.options.axisX = {
+                    gridThickness: 1,
+                    intervalType: "second",
+                    labelFormatter: function (e) {
+                        return Math.floor((e.value.getTime() - data[0].time_us/1000)/1000) + "s";
+                    },
+                    reversed: true,
+                };
+            }
 
             let memoryPoints = {};
 
@@ -231,26 +268,17 @@ function setupObserver(navSelector, tabContentSelector) {
                 }
             }
 
-            let tmpData = [];
+            charts.Memory.options.data = [];
             let memoryKeys = Object.keys(memoryPoints);
             for(let i=0; i<memoryKeys.length; i++) {
                 let key = memoryKeys[i];
-                tmpData.push({
+                charts.Memory.options.data.push({
                     type: "line",   
                     dataPoints: memoryPoints[key],
                     xValueType: "dateTime",
                     label: key
                 })
             }
-            charts.Memory.options.axisX = {
-                gridThickness: 1,
-                intervalType: "second",
-                labelFormatter: function (e) {
-                    return Math.floor((e.value.getTime() - data[0].time_us/1000)/1000) + "s";
-                },
-                reversed: true,
-              },
-            charts.Memory.options.data = tmpData;
 
             let ioCol = findOrCreate(
                 `col-${tabName}-io`,
@@ -258,8 +286,17 @@ function setupObserver(navSelector, tabContentSelector) {
                 bottomHalf
             );
 
-            if(charts.IO === null)
+            if(charts.IO === null) {
                 charts.IO = createChart(`container-${tabName}-io`, ioCol, "IO Usage (B)")
+                charts.IO.options.axisX = {
+                    gridThickness: 1,
+                    intervalType: "second",
+                    labelFormatter: function (e) {
+                        return Math.floor((e.value.getTime() - data[0].time_us/1000)/1000) + "s";
+                    },
+                    reversed: true,
+                }
+            }
 
             let ioPoints = {
                 input: [],
@@ -272,26 +309,17 @@ function setupObserver(navSelector, tabContentSelector) {
                 ioPoints.output.push({x: elem.time_us/1000, y: elem.io.output, label: "output"});
             }
 
-            tmpData = [];
+            charts.IO.options.data = [];
             let ioKeys = Object.keys(ioPoints);
             for(let i=0; i<ioKeys.length; i++) {
                 let key = ioKeys[i];
-                tmpData.push({
+                charts.IO.options.data.push({
                     type: "line",   
                     dataPoints: ioPoints[key],
                     xValueType: "dateTime",
                     label: key
                 })
             }
-            charts.IO.options.axisX = {
-                gridThickness: 1,
-                intervalType: "second",
-                labelFormatter: function (e) {
-                    return Math.floor((e.value.getTime() - data[0].time_us/1000)/1000) + "s";
-                },
-                reversed: true,
-            },
-            charts.IO.options.data = tmpData;
         }
     };
 
