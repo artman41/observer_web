@@ -1,7 +1,7 @@
 CLONE_DIR ?= src/cloned
 
 ERL ?= erl +A1 -noinput -boot no_dot_erlang -pa deps/*/ebin
-DEPS_DIR ?= deps/
+DEPS_DIR ?= $(CURDIR)/deps/
 
 ifeq ($(V),)
 verbose = @

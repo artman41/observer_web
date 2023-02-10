@@ -5,8 +5,8 @@ PROJECT_VERSION = 0.1.0
 DEPS += cowboy
 DEPS += jsx
 
-CLONED_MODS += observer_wx
-CLONED_MODS += observer_perf_wx
+# CLONED_MODS += observer_wx
+# CLONED_MODS += observer_perf_wx
 
 ifeq ($(COWBOY_VSN),2)
 dep_cowboy = $(pkg_cowboy_fetch) $(pkg_cowboy_repo) 2.9.0
@@ -55,6 +55,7 @@ rec_to_props(paint, Rec = #paint{}) ->
 	lists:zip(Fields, tl(tuple_to_list(Rec))).
 endef
 
+include erlang_vsn.mk
 include clone.mk
 include erlang.mk
 include templates.mk

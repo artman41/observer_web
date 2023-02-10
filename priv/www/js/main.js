@@ -104,17 +104,62 @@ function setupObserver(navSelector, tabContentSelector) {
 
     function createChart(containerId, parentElem, title) {
         let chart = new CanvasJS.Chart(
-            findOrCreate(containerId, `<div class="container-fluid"></div>`, parentElem).id, 
+            findOrCreate(containerId, `<div class="container-fluid" style="height: 25em;"></div>`, parentElem).id, 
             {
-                title:{text: title},
+                title:{
+                    text: title,
+                    fontFamily: "Segoe UI",
+                    horizontalAlign: "left",
+                    fontSize: 12,
+                    fontWeight: "bold",
+                    // fontColor: "darkgrey",
+                },
                 data: [
                     {type: "line", dataPoints: []}
                 ], 
                 axisX: {
                     reversed: true
+                },  
+                zoomEnabled: true,
+                toolTip: {
+                    shared: true  
                 },
+                legend: {
+                    verticalAlign: "bottom",
+                    horizontalAlign: "center",
+                    fontSize: 14,
+                    fontWeight: "bold",
+                    fontFamily: "calibri",
+                    fontColor: "dimGrey",
+                    cursor:"pointer",
+                    itemclick : function(e) {
+                        if (typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+                            e.dataSeries.visible = false;
+                        }
+                        else {
+                            e.dataSeries.visible = true;
+                        }
+                        chart.render();
+                    }
+                }
             }
         );
+    
+        /* Cheeky hack to prevent the 'CanvasJS Trial' text from appearing */
+        let addEl = chart.addEventListener;
+        chart.addEventListener = function(...args) {
+            if(args[0] === "dataAnimationIterationEnd")
+                return undefined;
+            return addEl.apply(this, args);
+        }
+        
+        /* Cheeky hack to prevent the 'CanvasJS.com' text from appearing */
+        let f = chart.render;
+        function render(...args) {
+            f.apply(chart, args);
+            chart._creditLink.remove()
+        }
+        chart.render = render.bind(chart);
         chart.render();
         setInterval(() => chart.render(), 250);
         return chart;
@@ -177,7 +222,7 @@ function setupObserver(navSelector, tabContentSelector) {
             }
             let topHalf = findOrCreate(
                 `row-${tabName}-top`,
-                `<div class="row"></div>`,
+                `<div class="row" style="padding-right: 1em;"></div>`,
                 tabPane
             );
 
@@ -199,7 +244,6 @@ function setupObserver(navSelector, tabContentSelector) {
                     },
                     reversed: true,
                 };
-                charts.Scheduler.container.style.paddingBottom = '45%';
             }
 
             let schedulerPoints = {};
@@ -212,7 +256,7 @@ function setupObserver(navSelector, tabContentSelector) {
                     if(schedulerPoints[key] === undefined)
                         schedulerPoints[key] = [];
                     
-                    schedulerPoints[key].push({x: elem.time_us/1000, y: pct, label: `scheduler ${key}`});
+                    schedulerPoints[key].push({x: elem.time_us/1000, y: pct});
                 }
             }
 
@@ -226,13 +270,14 @@ function setupObserver(navSelector, tabContentSelector) {
                     percentFormatString: "#0.##",
                     dataPoints: schedulerPoints[key],
                     xValueType: "dateTime",
-                    label: key
+                    name: `scheduler ${key}`,
+                    showInLegend: true
                 })
             }
 
             let bottomHalf = findOrCreate(
                 `row-${tabName}-bottom`,
-                `<div class="row"></div>`,
+                `<div class="row" style="padding-right: 1em;"></div>`,
                 tabPane
             );
 
@@ -264,7 +309,7 @@ function setupObserver(navSelector, tabContentSelector) {
                     if(memoryPoints[key] === undefined)
                         memoryPoints[key] = [];
                     
-                    memoryPoints[key].push({x: elem.time_us/1000, y: bytes/1000000, label: `${key}`});
+                    memoryPoints[key].push({x: elem.time_us/1000, y: bytes/1000000});
                 }
             }
 
@@ -276,7 +321,8 @@ function setupObserver(navSelector, tabContentSelector) {
                     type: "line",   
                     dataPoints: memoryPoints[key],
                     xValueType: "dateTime",
-                    label: key
+                    name: key,
+                    showInLegend: true,
                 })
             }
 
@@ -305,8 +351,8 @@ function setupObserver(navSelector, tabContentSelector) {
 
             for(let i=0; i<data.length; i++) {
                 let elem = data[i];
-                ioPoints.input.push({x: elem.time_us/1000, y: elem.io.input, label: "input"});
-                ioPoints.output.push({x: elem.time_us/1000, y: elem.io.output, label: "output"});
+                ioPoints.input.push({x: elem.time_us/1000, y: elem.io.input});
+                ioPoints.output.push({x: elem.time_us/1000, y: elem.io.output});
             }
 
             charts.IO.options.data = [];
@@ -317,7 +363,8 @@ function setupObserver(navSelector, tabContentSelector) {
                     type: "line",   
                     dataPoints: ioPoints[key],
                     xValueType: "dateTime",
-                    label: key
+                    name: key,
+                    showInLegend: true,
                 })
             }
         }
